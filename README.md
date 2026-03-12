@@ -112,7 +112,7 @@ AIRBNB-CLONE/
 
 ###  Clone the Repository
 
-git clone <your-repo-link>
+git clone https://github.com/ifxaal/airbnb-mern-clone
 
 ###  Set up Backend
 
