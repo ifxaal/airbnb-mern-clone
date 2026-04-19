@@ -190,6 +190,10 @@ function PropertyDetail() {
             ? property.images[0]
             : "/images/house1.jpg"
         }
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/images/house1.jpg";
+        }}
         alt={property.title}
         style={{
           width: "100%",

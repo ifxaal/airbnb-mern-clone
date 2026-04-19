@@ -1,0 +1,3 @@
+﻿client/public/images/house1.jpg
+client/public/images/house2.jpg
+client/public/images/house3.jpg

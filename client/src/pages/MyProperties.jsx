@@ -79,23 +79,29 @@ function MyProperties() {
       )}
 
       <div className="grid">
-        {properties.map((p) => (
-          <div
-            key={p._id}
-            className="property-card"
-          >
-            <img
-  src={
-    p.image
-      ? p.image.startsWith("http")
-        ? p.image
-        : `http://localhost:5000${p.image}`
-      : p.images && p.images.length > 0
-        ? p.images[0]
-        : "/images/house2.jpg"
-  }
-  alt={p.title}
-/>
+        {properties.map((p, index) => {
+          const fallbackImages = ["/images/house1.jpg", "/images/house2.jpg", "/images/house3.jpg"];
+          return (
+            <div
+              key={p._id}
+              className="property-card"
+            >
+              <img
+                src={
+                  p.image
+                    ? p.image.startsWith("http")
+                      ? p.image
+                      : `http://localhost:5000${p.image}`
+                    : p.images && p.images.length > 0
+                    ? p.images[0]
+                    : fallbackImages[index % fallbackImages.length]
+                }
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = fallbackImages[index % fallbackImages.length];
+                }}
+                alt={p.title}
+              />
 
 
 
@@ -113,7 +119,8 @@ function MyProperties() {
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
     

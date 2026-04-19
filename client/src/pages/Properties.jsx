@@ -174,6 +174,10 @@ function Properties() {
                     ? p.images[0]
                     : fallbackImages[index % fallbackImages.length]
                 }
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = fallbackImages[index % fallbackImages.length];
+                }}
                 alt={p.title}
               />
               <div className="property-card-body">
