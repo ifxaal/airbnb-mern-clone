@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import api from "../api/axios";
-
+import api, { getImageSrc } from "../api/axios";
 function PropertyDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -185,9 +184,9 @@ function PropertyDetail() {
       <img
         src={
           property.image
-            ? property.image.startsWith("http") ? property.image : `http://localhost:5000${property.image}`
+            ? getImageSrc(property.image)
             : property.images && property.images.length > 0
-            ? property.images[0]
+            ? getImageSrc(property.images[0])
             : "/images/house1.jpg"
         }
         onError={(e) => {

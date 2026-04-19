@@ -20,4 +20,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const getImageSrc = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("http")) return imagePath;
+  const base = apiBaseURL.endsWith("/") ? apiBaseURL.slice(0, -1) : apiBaseURL;
+  const path = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  return `${base}${path}`;
+};
+
 export default api;

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
-
+import api, { getImageSrc } from "../api/axios";
 function Properties() {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
@@ -169,9 +168,9 @@ function Properties() {
               <img
                 src={
                   p.image
-                    ? p.image.startsWith("http") ? p.image : `http://localhost:5000${p.image}`
+                    ? getImageSrc(p.image)
                     : p.images && p.images.length > 0
-                    ? p.images[0]
+                    ? getImageSrc(p.images[0])
                     : fallbackImages[index % fallbackImages.length]
                 }
                 onError={(e) => {
