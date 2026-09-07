@@ -14,7 +14,6 @@ function Navbar() {
     };
 
     window.addEventListener("storage", handleStorageChange);
-
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
@@ -35,12 +34,11 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to="/" className="brand-link">
-          <div className="brand-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
+          <span className="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
             </svg>
-          </div>
+          </span>
           <span>StayEase</span>
         </Link>
         <div className="nav-links">
@@ -48,8 +46,8 @@ function Navbar() {
             <>
               <Link to="/my-properties" className="nav-link">My Properties</Link>
               <Link to="/my-bookings" className="nav-link">My Bookings</Link>
-              <Link to="/create" className="nav-link">List Property</Link>
-              <button onClick={handleLogout} className="button button-outline" style={{ padding: "0.45rem 0.9rem" }}>Logout</button>
+              <Link to="/create" className="button button-outline">List Property</Link>
+              <button onClick={handleLogout} className="button button-outline">Logout</button>
             </>
           ) : (
             <>

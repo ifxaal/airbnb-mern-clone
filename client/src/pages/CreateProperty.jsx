@@ -20,10 +20,10 @@ function CreateProperty() {
   const [submitting, setSubmitting] = useState(false);
 
   const sampleImages = [
-    { label: "Beach Villa", url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80" },
+    { label: "Beachfront Villa", url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80" },
     { label: "Mountain Cabin", url: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80" },
     { label: "Heritage Haveli", url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80" },
-    { label: "Modern Loft", url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80" },
+    { label: "Modern Apartment", url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80" },
   ];
 
   const handleChange = (e) => {
@@ -93,27 +93,27 @@ function CreateProperty() {
 
       navigate("/my-properties");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Failed to create property");
+      setMessage(err.response?.data?.message || "Failed to create property.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: "780px", margin: "0 auto" }}>
-      <h1 className="page-title">List Your Property on StayEase</h1>
-      <p className="muted" style={{ margin: "-0.8rem 0 1.5rem" }}>
-        Showcase your home or vacation villa to thousands of travelers.
+    <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+        List a Property
+      </h1>
+      <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: "1.25rem" }}>
+        Enter details to publish your stay on StayEase.
       </p>
 
-      <form onSubmit={handleSubmit} className="panel" style={{ padding: "2rem", display: "grid", gap: "1rem" }}>
-        <div>
-          <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-            Property Title *
-          </label>
+      <form onSubmit={handleSubmit} className="panel" style={{ padding: "1.5rem" }}>
+        <div className="form-group">
+          <label className="form-label">Property Title</label>
           <input
             name="title"
-            placeholder="e.g. Sunset Point Luxury Cliffside Villa"
+            placeholder="e.g. Coastal Breeze Villa"
             value={form.title}
             onChange={handleChange}
             required
@@ -122,14 +122,12 @@ function CreateProperty() {
           {errors.title && <p className="status-error">{errors.title}</p>}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "1rem" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-              Location (City, State) *
-            </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "0.75rem" }}>
+          <div className="form-group">
+            <label className="form-label">Location</label>
             <input
               name="location"
-              placeholder="e.g. Goa, India"
+              placeholder="e.g. Goa"
               value={form.location}
               onChange={handleChange}
               required
@@ -138,14 +136,12 @@ function CreateProperty() {
             {errors.location && <p className="status-error">{errors.location}</p>}
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-              Price per Night (₹) *
-            </label>
+          <div className="form-group">
+            <label className="form-label">Price per Night (₹)</label>
             <input
               type="number"
               name="pricePerNight"
-              placeholder="e.g. 6500"
+              placeholder="e.g. 5000"
               value={form.pricePerNight}
               onChange={handleChange}
               required
@@ -155,14 +151,12 @@ function CreateProperty() {
           </div>
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-            Description *
-          </label>
+        <div className="form-group">
+          <label className="form-label">Description</label>
           <textarea
             name="description"
             rows={4}
-            placeholder="Describe the ambiance, scenic views, unique features, and nearby attractions..."
+            placeholder="Describe the rooms, views, amenities, and surroundings..."
             value={form.description}
             onChange={handleChange}
             required
@@ -171,37 +165,35 @@ function CreateProperty() {
           {errors.description && <p className="status-error">{errors.description}</p>}
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-            Property Image (Direct URL or Upload File)
-          </label>
+        <div className="form-group">
+          <label className="form-label">Property Image</label>
           <input
             type="url"
             name="imageUrl"
-            placeholder="Paste direct Image URL (e.g. Unsplash / Cloudinary)"
+            placeholder="Image URL (Unsplash or direct link)"
             value={form.imageUrl}
             onChange={handleChange}
             className="input"
             style={{ marginBottom: "0.5rem" }}
           />
 
-          <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", marginBottom: "0.75rem", alignItems: "center" }}>
-            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Quick samples:</span>
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.6rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", alignSelf: "center" }}>Sample photos:</span>
             {sampleImages.map((s, i) => (
               <button
                 key={i}
                 type="button"
                 className="button button-outline"
-                style={{ padding: "0.25rem 0.6rem", fontSize: "0.78rem" }}
+                style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem" }}
                 onClick={() => selectSample(s.url)}
               >
-                + {s.label}
+                {s.label}
               </button>
             ))}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Or upload file:</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Or upload:</span>
             <input
               type="file"
               onChange={handleFileChange}
@@ -213,24 +205,22 @@ function CreateProperty() {
         </div>
 
         {previewUrl && (
-          <div style={{ marginTop: "0.5rem" }}>
-            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-              Image Preview:
-            </label>
-            <div style={{ width: "100%", maxHeight: "240px", overflow: "hidden", borderRadius: "10px", border: "1px solid var(--line)" }}>
-              <img
-                src={previewUrl}
-                alt="Preview"
-                style={{ width: "100%", height: "240px", objectFit: "cover" }}
-                onError={() => setPreviewUrl("")}
-              />
-            </div>
+          <div style={{ marginBottom: "1rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>
+              Preview:
+            </span>
+            <img
+              src={previewUrl}
+              alt="Preview"
+              style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "6px", border: "1px solid var(--border)" }}
+              onError={() => setPreviewUrl("")}
+            />
           </div>
         )}
 
-        {message && <p className="status-error">{message}</p>}
+        {message && <p className="status-error" style={{ marginBottom: "0.75rem" }}>{message}</p>}
 
-        <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
           <button
             type="button"
             className="button button-outline"
@@ -243,7 +233,7 @@ function CreateProperty() {
             className="button button-primary"
             disabled={submitting}
           >
-            {submitting ? "Publishing listing..." : "Publish Property"}
+            {submitting ? "Saving..." : "Create Listing"}
           </button>
         </div>
       </form>

@@ -4,12 +4,12 @@ import api, { getImageSrc } from "../api/axios";
 import { fallbackProperties } from "../data/fallbackProperties";
 
 const CATEGORIES = [
-  { label: "All Stays", value: "All", icon: "🏠" },
-  { label: "Beachfront", value: "Beachfront", icon: "🏖️" },
-  { label: "Mountain", value: "Mountain", icon: "⛰️" },
-  { label: "Heritage Haveli", value: "Heritage", icon: "🏰" },
-  { label: "Nature & Retreat", value: "Nature", icon: "🌿" },
-  { label: "Luxury Penthouse", value: "Luxury", icon: "✨" },
+  { label: "All Stays", value: "All" },
+  { label: "Beachfront", value: "Beachfront" },
+  { label: "Mountain", value: "Mountain" },
+  { label: "Heritage", value: "Heritage" },
+  { label: "Nature", value: "Nature" },
+  { label: "City Views", value: "Luxury" },
 ];
 
 function Properties() {
@@ -61,10 +61,6 @@ function Properties() {
     setFilterError("");
   };
 
-  const handleCategorySelect = (cat) => {
-    setActiveCategory(cat);
-  };
-
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -88,7 +84,6 @@ function Properties() {
         if (res.data && res.data.length > 0) {
           setProperties(res.data);
         } else {
-          // If server returned empty, check local fallback
           let filtered = [...fallbackProperties];
           if (queryFilters.location) {
             const loc = queryFilters.location.toLowerCase();
@@ -114,8 +109,6 @@ function Properties() {
       })
       .catch((err) => {
         if (!isMounted || err.name === "CanceledError" || err.code === "ERR_CANCELED") return;
-        // Resilient fallback: populate with demo properties so recruiters never see an empty error screen
-        console.warn("API request failed; rendering graceful fallback demo properties.", err.message);
         let filtered = [...fallbackProperties];
         if (queryFilters.location) {
           const loc = queryFilters.location.toLowerCase();
@@ -145,27 +138,23 @@ function Properties() {
   return (
     <div>
       {/* HERO SECTION */}
-      <section className="hero-panel">
-        <div className="hero-badge">
-          <span>✨ Curated Vacation Stays & Getaways</span>
-        </div>
+      <section className="hero-section">
         <h1 className="hero-title">Discover Your Next Stay</h1>
         <p className="hero-subtext">
-          Explore handcrafted villas, mountain chalets, and heritage suites with verified hosts and seamless bookings.
+          Find and book unique vacation homes, chalets, and apartments with ease.
         </p>
       </section>
 
-      {/* CATEGORY BAR */}
+      {/* CATEGORY TABS */}
       <div className="category-bar">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.value}
             type="button"
-            className={`category-pill ${activeCategory === cat.value ? "active" : ""}`}
-            onClick={() => handleCategorySelect(cat.value)}
+            className={`category-tab ${activeCategory === cat.value ? "active" : ""}`}
+            onClick={() => setActiveCategory(cat.value)}
           >
-            <span>{cat.icon}</span>
-            <span>{cat.label}</span>
+            {cat.label}
           </button>
         ))}
       </div>
@@ -173,14 +162,22 @@ function Properties() {
       {/* SEARCH & FILTERS */}
       <section className="search-panel">
         <div className="filter-grid">
-          <input
-            type="text"
-            placeholder="🔍 Search by city, state, or villa name..."
-            value={filters.location}
-            onChange={(e) => handleFilterChange("location", e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            className="input"
-          />
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Search destination or property..."
+              value={filters.location}
+              onChange={(e) => handleFilterChange("location", e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+              className="input input-with-icon"
+            />
+          </div>
           <input
             type="number"
             placeholder="Min Price (₹)"
@@ -202,7 +199,7 @@ function Properties() {
             onChange={(e) => handleFilterChange("sortOrder", e.target.value)}
             className="select"
           >
-            <option value="">Sort: Featured</option>
+            <option value="">Sort by</option>
             <option value="low">Price: Low to High</option>
             <option value="high">Price: High to Low</option>
           </select>
@@ -220,11 +217,9 @@ function Properties() {
 
       {error && <p className="status-error">{error}</p>}
 
-      {/* LOADING STATE */}
+      {/* PROPERTIES LIST */}
       {loading ? (
         <div className="grid">
-          <div className="loading-block" />
-          <div className="loading-block" />
           <div className="loading-block" />
           <div className="loading-block" />
           <div className="loading-block" />
@@ -232,13 +227,12 @@ function Properties() {
         </div>
       ) : properties.length === 0 ? (
         <div className="empty-state">
-          <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🏡</div>
-          <h3 style={{ margin: "0 0 0.5rem", color: "var(--ink)" }}>No properties found</h3>
-          <p className="muted" style={{ margin: "0 0 1rem", maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
-            We couldn't find any stays matching your current filters. Try resetting the filters or searching for another location.
+          <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.1rem" }}>No properties match your search</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", margin: "0 0 1rem" }}>
+            Try adjusting your search location or clearing active price filters.
           </p>
-          <button type="button" className="button button-primary" onClick={clearFilters}>
-            Reset All Filters
+          <button type="button" className="button button-outline" onClick={clearFilters}>
+            Reset Filters
           </button>
         </div>
       ) : (
@@ -276,21 +270,18 @@ function Properties() {
                     loading="lazy"
                   />
                   {isSuperhost && (
-                    <span className="badge badge-superhost">⭐ SUPERHOST</span>
+                    <span className="badge-tag">Superhost</span>
                   )}
-                  <span className="rating-chip">
-                    <span className="rating-star">★</span>
+                  <span className="rating-badge">
+                    <span className="star-icon">★</span>
                     <span>{displayRating}</span>
                   </span>
                 </div>
                 <div className="property-card-body">
-                  <div className="property-card-header">
-                    <h3 className="property-title" title={p.title}>
-                      {p.title}
-                    </h3>
-                  </div>
+                  <h3 className="property-title" title={p.title}>
+                    {p.title}
+                  </h3>
                   <p className="property-location">
-                    <span>📍</span>
                     <span>{p.location}</span>
                   </p>
                   <div className="property-card-footer">
@@ -298,9 +289,6 @@ function Properties() {
                       ₹{Number(p.pricePerNight).toLocaleString("en-IN")}{" "}
                       <span className="price-unit">/ night</span>
                     </p>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--primary)" }}>
-                      View Details →
-                    </span>
                   </div>
                 </div>
               </div>

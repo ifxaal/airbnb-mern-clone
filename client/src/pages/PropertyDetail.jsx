@@ -49,7 +49,6 @@ function PropertyDetail() {
         if (propertyRes.status === "fulfilled" && propertyRes.value?.data) {
           setProperty(propertyRes.value.data);
         } else {
-          // Check fallback
           const fallback = fallbackProperties.find((p) => p._id === id);
           if (fallback) {
             setProperty(fallback);
@@ -101,7 +100,7 @@ function PropertyDetail() {
     ? Math.max(0, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)))
     : 0;
   const estimatedTotal = property ? nights * Number(property.pricePerNight || 0) : 0;
-  const serviceFee = Math.round(estimatedTotal * 0.08);
+  const serviceFee = Math.round(estimatedTotal * 0.05);
   const grandTotal = estimatedTotal + serviceFee;
 
   const handleBooking = async () => {
@@ -110,11 +109,11 @@ function PropertyDetail() {
 
     const token = localStorage.getItem("token");
     if (!token) {
-      setBookingError("Please login to book this property.");
+      setBookingError("Please log in to book this property.");
       return;
     }
     if (!startDate || !endDate) {
-      setBookingError("Please select both check-in and check-out dates.");
+      setBookingError("Please select check-in and check-out dates.");
       return;
     }
     if (nights <= 0) {
@@ -129,11 +128,11 @@ function PropertyDetail() {
         startDate,
         endDate,
       });
-      setBookingMessage("🎉 Booking successful! You can view it in My Bookings.");
+      setBookingMessage("Booking confirmed. You can view details in My Bookings.");
       setStartDate("");
       setEndDate("");
     } catch (err) {
-      setBookingError(err.response?.data?.message || "Booking failed. Please try again.");
+      setBookingError(err.response?.data?.message || "Booking request failed. Please try again.");
     } finally {
       setSubmittingBooking(false);
     }
@@ -143,11 +142,11 @@ function PropertyDetail() {
     setReviewError("");
     const token = localStorage.getItem("token");
     if (!token) {
-      setReviewError("Please login to add a review.");
+      setReviewError("Please log in to write a review.");
       return;
     }
     if (!comment.trim()) {
-      setReviewError("Review comment cannot be empty.");
+      setReviewError("Comment cannot be empty.");
       return;
     }
 
@@ -163,7 +162,7 @@ function PropertyDetail() {
       setReviews(res.data || []);
       setComment("");
     } catch (err) {
-      setReviewError(err.response?.data?.message || "Review failed.");
+      setReviewError(err.response?.data?.message || "Could not submit review.");
     } finally {
       setSubmittingReview(false);
     }
@@ -182,8 +181,8 @@ function PropertyDetail() {
   if (loading) {
     return (
       <div style={{ display: "grid", gap: "1rem" }}>
-        <div className="loading-block" style={{ height: "360px" }} />
-        <div className="loading-block" style={{ height: "180px" }} />
+        <div className="loading-block" style={{ height: "300px" }} />
+        <div className="loading-block" style={{ height: "150px" }} />
       </div>
     );
   }
@@ -191,12 +190,12 @@ function PropertyDetail() {
   if (!property) return <p className="status-error">{pageError || "Property not found."}</p>;
 
   const defaultAmenities = [
-    "High-speed Wi-Fi",
-    "Air Conditioning",
-    "Dedicated Workspace",
-    "Fully Equipped Kitchen",
-    "Free Parking",
-    "Swimming Pool / View",
+    "Wi-Fi",
+    "Air conditioning",
+    "Dedicated workspace",
+    "Kitchen",
+    "Free parking",
+    "Hot water",
   ];
   const displayAmenities = property.amenities || defaultAmenities;
 
@@ -219,46 +218,38 @@ function PropertyDetail() {
   );
 
   return (
-    <div className="detail-container">
-      {/* NAVIGATION / BREADCRUMB */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="detail-layout">
+      {/* TOP NAVIGATION */}
+      <div className="detail-top-nav">
         <button
           type="button"
           className="button button-outline"
           onClick={() => navigate(-1)}
-          style={{ padding: "0.45rem 0.85rem", fontSize: "0.88rem" }}
         >
-          ← Back to stays
+          ← Back
         </button>
         {isOwner && (
           <button
             type="button"
             className="button button-danger"
             onClick={handleDelete}
-            style={{ padding: "0.45rem 0.85rem", fontSize: "0.88rem" }}
           >
-            Delete Property
+            Delete Listing
           </button>
         )}
       </div>
 
-      {/* HEADER INFO */}
+      {/* TITLE & META */}
       <div>
-        <h1 style={{ margin: "0 0 0.4rem", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 800 }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.25rem" }}>
           {property.title}
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", color: "var(--muted)", fontSize: "0.92rem" }}>
-          <span>⭐ {averageRating} ({reviews.length > 0 ? `${reviews.length} reviews` : "New"})</span>
-          <span>•</span>
-          <span>📍 {property.location}</span>
-          <span>•</span>
-          <span style={{ color: isAvailable ? "var(--success)" : "var(--danger)", fontWeight: 600 }}>
-            {isAvailable ? "● Available to book" : "● Currently Booked"}
-          </span>
-        </div>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+          ★ {averageRating} ({reviews.length} reviews) · {property.location} · {isAvailable ? "Available" : "Booked"}
+        </p>
       </div>
 
-      {/* PHOTO GALLERY */}
+      {/* GALLERY */}
       <div className="detail-gallery">
         <img
           src={mainImage}
@@ -274,7 +265,7 @@ function PropertyDetail() {
             <img
               key={i}
               src={src}
-              alt={`${property.title} detail ${i + 1}`}
+              alt={`${property.title} preview ${i + 1}`}
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80";
@@ -284,69 +275,70 @@ function PropertyDetail() {
         </div>
       </div>
 
-      {/* MAIN CONTENT & BOOKING SIDEBAR */}
-      <div className="detail-content-layout">
-        {/* LEFT COLUMN: DESCRIPTION & AMENITIES */}
+      {/* CONTENT & BOOKING */}
+      <div className="detail-columns">
         <div>
-          <div className="panel" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h3 style={{ margin: "0 0 0.75rem", fontSize: "1.2rem", fontWeight: 700 }}>About this stay</h3>
-            <p style={{ margin: 0, color: "var(--ink-secondary)", lineHeight: 1.65, fontSize: "0.98rem" }}>
+          {/* DESCRIPTION */}
+          <div className="panel detail-card">
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.5rem" }}>About this place</h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.92rem", lineHeight: 1.6 }}>
               {property.description}
             </p>
           </div>
 
-          <div className="panel" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h3 style={{ margin: "0 0 0.85rem", fontSize: "1.2rem", fontWeight: 700 }}>What this place offers</h3>
-            <div className="amenities-list">
+          {/* AMENITIES */}
+          <div className="panel detail-card">
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.5rem" }}>Amenities</h3>
+            <div className="amenities-container">
               {displayAmenities.map((amenity, idx) => (
-                <span key={idx} className="amenity-chip">
-                  ✓ {amenity}
+                <span key={idx} className="amenity-tag">
+                  {amenity}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* REVIEWS SECTION */}
-          <div className="panel" style={{ padding: "1.5rem" }}>
-            <h3 style={{ margin: "0 0 1rem", fontSize: "1.2rem", fontWeight: 700 }}>
-              Guest Reviews ({reviews.length})
+          {/* REVIEWS */}
+          <div className="panel detail-card">
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.75rem" }}>
+              Reviews ({reviews.length})
             </h3>
 
             {reviews.length === 0 ? (
-              <p className="muted" style={{ margin: "0 0 1rem" }}>No reviews yet for this listing.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>No reviews yet for this listing.</p>
             ) : (
               reviews.map((r) => (
-                <div key={r._id} className="review-card">
-                  <div className="review-author-row">
-                    <div className="avatar">
-                      {r.user?.name ? r.user.name[0].toUpperCase() : "G"}
+                <div key={r._id} className="review-item">
+                  <div className="review-user-row">
+                    <div className="avatar-circle">
+                      {r.user?.name ? r.user.name[0].toUpperCase() : "U"}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
-                        {r.user?.name || "Guest Traveler"}
+                      <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                        {r.user?.name || "Guest"}
                       </div>
-                      <div style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-                        {"★".repeat(r.rating || 5)} • {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Recent stay"}
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                        ★ {r.rating} · {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Recent"}
                       </div>
                     </div>
                   </div>
-                  <p style={{ margin: "0.4rem 0 0", color: "var(--ink-secondary)", fontSize: "0.9rem" }}>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "0.3rem" }}>
                     {r.comment}
                   </p>
                 </div>
               ))
             )}
 
-            {/* LEAVE A REVIEW */}
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: "1px solid var(--line)" }}>
-              <h4 style={{ margin: "0 0 0.75rem", fontSize: "1rem" }}>Leave a Review</h4>
-              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem", alignItems: "center" }}>
-                <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Rating:</span>
+            {/* LEAVE REVIEW */}
+            <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid var(--border)" }}>
+              <h4 style={{ fontSize: "0.92rem", fontWeight: 600, marginBottom: "0.5rem" }}>Leave a review</h4>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Rating:</span>
                 <select
                   value={rating}
                   onChange={(e) => setRating(Number(e.target.value))}
                   className="select"
-                  style={{ width: "120px" }}
+                  style={{ width: "110px", padding: "0.35rem 0.5rem" }}
                 >
                   <option value={5}>5 - Excellent</option>
                   <option value={4}>4 - Good</option>
@@ -357,16 +349,16 @@ function PropertyDetail() {
               </div>
               <textarea
                 rows={3}
-                placeholder="Share your experience at this property..."
+                placeholder="Write your review here..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 className="textarea"
-                style={{ marginBottom: "0.75rem" }}
+                style={{ marginBottom: "0.5rem" }}
               />
               {reviewError && <p className="status-error" style={{ marginBottom: "0.5rem" }}>{reviewError}</p>}
               <button
                 type="button"
-                className="button button-primary"
+                className="button button-outline"
                 onClick={handleReview}
                 disabled={submittingReview}
               >
@@ -376,23 +368,23 @@ function PropertyDetail() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: BOOKING CARD */}
-        <aside className="booking-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "1rem" }}>
+        {/* BOOKING SIDEBAR */}
+        <div className="panel booking-box">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.75rem" }}>
             <div>
-              <span style={{ fontSize: "1.6rem", fontWeight: 800 }}>
+              <span style={{ fontSize: "1.4rem", fontWeight: 700 }}>
                 ₹{Number(property.pricePerNight).toLocaleString("en-IN")}
               </span>
               <span className="price-unit"> / night</span>
             </div>
-            <span style={{ fontSize: "0.88rem", fontWeight: 600 }}>
-              ⭐ {averageRating}
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              ★ {averageRating}
             </span>
           </div>
 
-          <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1rem" }}>
+          <div style={{ display: "grid", gap: "0.5rem", marginBottom: "1rem" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--muted)", marginBottom: "0.25rem" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.2rem" }}>
                 CHECK-IN
               </label>
               <input
@@ -404,7 +396,7 @@ function PropertyDetail() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--muted)", marginBottom: "0.25rem" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.2rem" }}>
                 CHECK-OUT
               </label>
               <input
@@ -418,25 +410,25 @@ function PropertyDetail() {
           </div>
 
           {nights > 0 && (
-            <div className="price-breakdown">
-              <div className="price-row">
+            <div className="price-summary">
+              <div className="summary-row">
                 <span>₹{Number(property.pricePerNight).toLocaleString("en-IN")} × {nights} nights</span>
                 <span>₹{estimatedTotal.toLocaleString("en-IN")}</span>
               </div>
-              <div className="price-row">
-                <span>Service & Maintenance fee</span>
+              <div className="summary-row">
+                <span>Service fee (5%)</span>
                 <span>₹{serviceFee.toLocaleString("en-IN")}</span>
               </div>
-              <div className="price-row total">
-                <span>Total before taxes</span>
+              <div className="summary-row total">
+                <span>Total</span>
                 <span>₹{grandTotal.toLocaleString("en-IN")}</span>
               </div>
             </div>
           )}
 
-          {bookingError && <p className="status-error" style={{ marginBottom: "0.75rem" }}>{bookingError}</p>}
+          {bookingError && <p className="status-error" style={{ marginBottom: "0.5rem" }}>{bookingError}</p>}
           {bookingMessage && (
-            <p style={{ color: "var(--success)", fontSize: "0.88rem", fontWeight: 600, margin: "0 0 0.75rem" }}>
+            <p style={{ color: "#059669", fontSize: "0.85rem", fontWeight: 500, margin: "0 0 0.5rem" }}>
               {bookingMessage}
             </p>
           )}
@@ -444,23 +436,19 @@ function PropertyDetail() {
           <button
             type="button"
             className="button button-primary"
-            style={{ width: "100%", padding: "0.75rem", fontSize: "1rem" }}
+            style={{ width: "100%", padding: "0.65rem", fontSize: "0.95rem" }}
             onClick={handleBooking}
             disabled={submittingBooking || !isAvailable}
           >
             {submittingBooking
-              ? "Reserving..."
+              ? "Processing..."
               : !isAvailable
-              ? "Dates Unavailable"
+              ? "Unavailable"
               : nights > 0
-              ? `Reserve for ₹${grandTotal.toLocaleString("en-IN")}`
+              ? `Reserve (₹${grandTotal.toLocaleString("en-IN")})`
               : "Check Availability"}
           </button>
-
-          <p className="muted" style={{ textAlign: "center", fontSize: "0.8rem", margin: "0.75rem 0 0" }}>
-            You won't be charged yet. Instant confirmation.
-          </p>
-        </aside>
+        </div>
       </div>
     </div>
   );
