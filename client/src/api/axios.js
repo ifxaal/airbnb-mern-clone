@@ -22,7 +22,14 @@ api.interceptors.request.use((config) => {
 
 export const getImageSrc = (imagePath) => {
   if (!imagePath) return null;
-  if (imagePath.startsWith("http")) return imagePath;
+  if (
+    imagePath.startsWith("http://") ||
+    imagePath.startsWith("https://") ||
+    imagePath.startsWith("//") ||
+    imagePath.startsWith("data:")
+  ) {
+    return imagePath;
+  }
   const base = apiBaseURL.endsWith("/") ? apiBaseURL.slice(0, -1) : apiBaseURL;
   const path = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
   return `${base}${path}`;

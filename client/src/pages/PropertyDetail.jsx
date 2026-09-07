@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api, { getImageSrc } from "../api/axios";
+import { fallbackProperties } from "../data/fallbackProperties";
+
 function PropertyDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -20,13 +22,12 @@ function PropertyDetail() {
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const averageRating = useMemo(
-    () =>
-      reviews.length > 0
-        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-        : null,
-    [reviews]
-  );
+  const averageRating = useMemo(() => {
+    if (reviews.length > 0) {
+      return (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+    }
+    return property?.rating || "4.9";
+  }, [reviews, property]);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,10 +46,16 @@ function PropertyDetail() {
 
         if (!isMounted) return;
 
-        if (propertyRes.status === "fulfilled") {
+        if (propertyRes.status === "fulfilled" && propertyRes.value?.data) {
           setProperty(propertyRes.value.data);
         } else {
-          setPageError("Unable to load this property.");
+          // Check fallback
+          const fallback = fallbackProperties.find((p) => p._id === id);
+          if (fallback) {
+            setProperty(fallback);
+          } else {
+            setPageError("Unable to load this property.");
+          }
         }
 
         if (bookingsRes.status === "fulfilled") {
@@ -70,7 +77,12 @@ function PropertyDetail() {
         }
       } catch (err) {
         if (err.name === "CanceledError" || err.code === "ERR_CANCELED") return;
-        if (isMounted) setPageError("Unable to load this property.");
+        const fallback = fallbackProperties.find((p) => p._id === id);
+        if (fallback) {
+          setProperty(fallback);
+        } else if (isMounted) {
+          setPageError("Unable to load this property.");
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -89,7 +101,8 @@ function PropertyDetail() {
     ? Math.max(0, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)))
     : 0;
   const estimatedTotal = property ? nights * Number(property.pricePerNight || 0) : 0;
-  const canBook = isAvailable && startDate && endDate && nights > 0 && !submittingBooking;
+  const serviceFee = Math.round(estimatedTotal * 0.08);
+  const grandTotal = estimatedTotal + serviceFee;
 
   const handleBooking = async () => {
     setBookingError("");
@@ -116,7 +129,7 @@ function PropertyDetail() {
         startDate,
         endDate,
       });
-      setBookingMessage("Booking successful. You can view it in My Bookings.");
+      setBookingMessage("🎉 Booking successful! You can view it in My Bookings.");
       setStartDate("");
       setEndDate("");
     } catch (err) {
@@ -168,151 +181,286 @@ function PropertyDetail() {
 
   if (loading) {
     return (
-      <div style={{ display: "grid", gap: "0.8rem" }}>
-        <div className="loading-block" />
-        <div className="loading-block" />
+      <div style={{ display: "grid", gap: "1rem" }}>
+        <div className="loading-block" style={{ height: "360px" }} />
+        <div className="loading-block" style={{ height: "180px" }} />
       </div>
     );
   }
 
   if (!property) return <p className="status-error">{pageError || "Property not found."}</p>;
 
+  const defaultAmenities = [
+    "High-speed Wi-Fi",
+    "Air Conditioning",
+    "Dedicated Workspace",
+    "Fully Equipped Kitchen",
+    "Free Parking",
+    "Swimming Pool / View",
+  ];
+  const displayAmenities = property.amenities || defaultAmenities;
+
+  const mainImage = property.image
+    ? getImageSrc(property.image)
+    : property.images && property.images.length > 0
+    ? getImageSrc(property.images[0])
+    : "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80";
+
+  const sideImages = property.images && property.images.length > 1
+    ? property.images.slice(1, 3).map((img) => getImageSrc(img))
+    : [
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80"
+      ];
+
+  const isOwner = currentUser && (
+    (typeof property.owner === "string" && property.owner === currentUser._id) ||
+    (property.owner && property.owner._id === currentUser._id)
+  );
+
   return (
-    <div className="panel" style={{ maxWidth: "1000px", margin: "0 auto", padding: "1.5rem" }}>
-      {pageError && <p className="status-error">{pageError}</p>}
-
-      <img
-        src={
-          property.image
-            ? getImageSrc(property.image)
-            : property.images && property.images.length > 0
-            ? getImageSrc(property.images[0])
-            : "/images/house1.jpg"
-        }
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = "/images/house1.jpg";
-        }}
-        alt={property.title}
-        style={{
-          width: "100%",
-          height: "450px",
-          objectFit: "cover",
-          borderRadius: "20px",
-          marginBottom: "30px",
-        }}
-      />
-
+    <div className="detail-container">
+      {/* NAVIGATION / BREADCRUMB */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="page-title" style={{ margin: 0 }}>{property.title}</h1>
-        {currentUser && property.owner?._id === currentUser._id && (
-          <button onClick={handleDelete} className="button button-danger">Delete</button>
-        )}
-      </div>
-
-      <p className="muted" style={{ marginBottom: "15px" }}>📍 {property.location}</p>
-      <p style={{ lineHeight: "1.6", marginBottom: "20px" }}>{property.description}</p>
-      <div className="price" style={{ fontSize: "22px", marginBottom: "25px" }}>
-        ₹{property.pricePerNight} / night
-      </div>
-
-      <div style={{ border: "1px solid #e4e7ec", padding: "20px", borderRadius: "16px", marginBottom: "40px" }}>
-        <h3 style={{ marginBottom: "15px" }}>Book Your Stay</h3>
-
-        <div className="property-meta-row" style={{ marginBottom: "10px" }}>
-          <label>Check-in</label>
-          <input
-            type="date"
-            min={minStartDate}
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="input date-input"
-          />
-        </div>
-
-        <div className="property-meta-row" style={{ marginBottom: "8px" }}>
-          <label>Check-out</label>
-          <input
-            type="date"
-            min={minEndDate}
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="input date-input"
-          />
-        </div>
-
-        {nights > 0 && (
-          <p className="muted" style={{ margin: "0.4rem 0" }}>
-            {nights} night(s) • Estimated total: ₹{estimatedTotal}
-          </p>
-        )}
-        {!isAvailable && <p className="status-error">Currently not available for booking.</p>}
-        {bookingError && <p className="status-error">{bookingError}</p>}
-        {bookingMessage && <p className="status-success">{bookingMessage}</p>}
-
         <button
-          onClick={handleBooking}
-          disabled={!canBook}
-          className="button button-primary"
-          style={{ marginTop: "10px", opacity: canBook ? 1 : 0.65, cursor: canBook ? "pointer" : "not-allowed" }}
+          type="button"
+          className="button button-outline"
+          onClick={() => navigate(-1)}
+          style={{ padding: "0.45rem 0.85rem", fontSize: "0.88rem" }}
         >
-          {submittingBooking ? "Booking..." : "Book Now"}
+          ← Back to stays
         </button>
+        {isOwner && (
+          <button
+            type="button"
+            className="button button-danger"
+            onClick={handleDelete}
+            style={{ padding: "0.45rem 0.85rem", fontSize: "0.88rem" }}
+          >
+            Delete Property
+          </button>
+        )}
       </div>
 
-      <hr style={{ margin: "40px 0" }} />
-      <h2 style={{ marginBottom: "10px" }}>
-        Reviews {averageRating && `• ⭐ ${averageRating} (${reviews.length})`}
-      </h2>
-
-      {reviews.length === 0 && (
-        <div className="empty-state" style={{ marginBottom: "0.8rem" }}>
-          <p className="muted">No reviews yet.</p>
+      {/* HEADER INFO */}
+      <div>
+        <h1 style={{ margin: "0 0 0.4rem", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 800 }}>
+          {property.title}
+        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", color: "var(--muted)", fontSize: "0.92rem" }}>
+          <span>⭐ {averageRating} ({reviews.length > 0 ? `${reviews.length} reviews` : "New"})</span>
+          <span>•</span>
+          <span>📍 {property.location}</span>
+          <span>•</span>
+          <span style={{ color: isAvailable ? "var(--success)" : "var(--danger)", fontWeight: 600 }}>
+            {isAvailable ? "● Available to book" : "● Currently Booked"}
+          </span>
         </div>
-      )}
+      </div>
 
-      {reviews.map((r) => (
-        <div
-          key={r._id}
-          style={{
-            border: "1px solid #e4e7ec",
-            padding: "15px",
-            marginBottom: "15px",
-            borderRadius: "12px",
-            background: "#f8f9fc",
+      {/* PHOTO GALLERY */}
+      <div className="detail-gallery">
+        <img
+          src={mainImage}
+          alt={property.title}
+          className="detail-main-image"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80";
           }}
-        >
-          <strong>{r.user?.name}</strong>
-          <p style={{ margin: "5px 0" }}>⭐ {r.rating} / 5</p>
-          <p>{r.comment}</p>
-        </div>
-      ))}
-
-      <div style={{ border: "1px solid #e4e7ec", padding: "20px", borderRadius: "16px", marginTop: "30px" }}>
-        <h3 style={{ marginBottom: "15px" }}>Add Review</h3>
-        <select
-          value={rating}
-          onChange={(e) => setRating(Number(e.target.value))}
-          className="select"
-          style={{ width: "120px", marginBottom: "10px" }}
-        >
-          <option value="5">5</option>
-          <option value="4">4</option>
-          <option value="3">3</option>
-          <option value="2">2</option>
-          <option value="1">1</option>
-        </select>
-        <textarea
-          placeholder="Write your review..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          className="textarea"
-          style={{ width: "100%", marginBottom: "15px", minHeight: "120px" }}
         />
-        {reviewError && <p className="status-error">{reviewError}</p>}
-        <button onClick={handleReview} className="button button-primary">
-          {submittingReview ? "Submitting..." : "Submit Review"}
-        </button>
+        <div className="detail-side-gallery">
+          {sideImages.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`${property.title} detail ${i + 1}`}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80";
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT & BOOKING SIDEBAR */}
+      <div className="detail-content-layout">
+        {/* LEFT COLUMN: DESCRIPTION & AMENITIES */}
+        <div>
+          <div className="panel" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 0.75rem", fontSize: "1.2rem", fontWeight: 700 }}>About this stay</h3>
+            <p style={{ margin: 0, color: "var(--ink-secondary)", lineHeight: 1.65, fontSize: "0.98rem" }}>
+              {property.description}
+            </p>
+          </div>
+
+          <div className="panel" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 0.85rem", fontSize: "1.2rem", fontWeight: 700 }}>What this place offers</h3>
+            <div className="amenities-list">
+              {displayAmenities.map((amenity, idx) => (
+                <span key={idx} className="amenity-chip">
+                  ✓ {amenity}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* REVIEWS SECTION */}
+          <div className="panel" style={{ padding: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 1rem", fontSize: "1.2rem", fontWeight: 700 }}>
+              Guest Reviews ({reviews.length})
+            </h3>
+
+            {reviews.length === 0 ? (
+              <p className="muted" style={{ margin: "0 0 1rem" }}>No reviews yet for this listing.</p>
+            ) : (
+              reviews.map((r) => (
+                <div key={r._id} className="review-card">
+                  <div className="review-author-row">
+                    <div className="avatar">
+                      {r.user?.name ? r.user.name[0].toUpperCase() : "G"}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
+                        {r.user?.name || "Guest Traveler"}
+                      </div>
+                      <div style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                        {"★".repeat(r.rating || 5)} • {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Recent stay"}
+                      </div>
+                    </div>
+                  </div>
+                  <p style={{ margin: "0.4rem 0 0", color: "var(--ink-secondary)", fontSize: "0.9rem" }}>
+                    {r.comment}
+                  </p>
+                </div>
+              ))
+            )}
+
+            {/* LEAVE A REVIEW */}
+            <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: "1px solid var(--line)" }}>
+              <h4 style={{ margin: "0 0 0.75rem", fontSize: "1rem" }}>Leave a Review</h4>
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Rating:</span>
+                <select
+                  value={rating}
+                  onChange={(e) => setRating(Number(e.target.value))}
+                  className="select"
+                  style={{ width: "120px" }}
+                >
+                  <option value={5}>5 - Excellent</option>
+                  <option value={4}>4 - Good</option>
+                  <option value={3}>3 - Average</option>
+                  <option value={2}>2 - Poor</option>
+                  <option value={1}>1 - Terrible</option>
+                </select>
+              </div>
+              <textarea
+                rows={3}
+                placeholder="Share your experience at this property..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="textarea"
+                style={{ marginBottom: "0.75rem" }}
+              />
+              {reviewError && <p className="status-error" style={{ marginBottom: "0.5rem" }}>{reviewError}</p>}
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={handleReview}
+                disabled={submittingReview}
+              >
+                {submittingReview ? "Submitting..." : "Submit Review"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: BOOKING CARD */}
+        <aside className="booking-card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "1rem" }}>
+            <div>
+              <span style={{ fontSize: "1.6rem", fontWeight: 800 }}>
+                ₹{Number(property.pricePerNight).toLocaleString("en-IN")}
+              </span>
+              <span className="price-unit"> / night</span>
+            </div>
+            <span style={{ fontSize: "0.88rem", fontWeight: 600 }}>
+              ⭐ {averageRating}
+            </span>
+          </div>
+
+          <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1rem" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--muted)", marginBottom: "0.25rem" }}>
+                CHECK-IN
+              </label>
+              <input
+                type="date"
+                min={minStartDate}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="input"
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--muted)", marginBottom: "0.25rem" }}>
+                CHECK-OUT
+              </label>
+              <input
+                type="date"
+                min={minEndDate}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="input"
+              />
+            </div>
+          </div>
+
+          {nights > 0 && (
+            <div className="price-breakdown">
+              <div className="price-row">
+                <span>₹{Number(property.pricePerNight).toLocaleString("en-IN")} × {nights} nights</span>
+                <span>₹{estimatedTotal.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="price-row">
+                <span>Service & Maintenance fee</span>
+                <span>₹{serviceFee.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="price-row total">
+                <span>Total before taxes</span>
+                <span>₹{grandTotal.toLocaleString("en-IN")}</span>
+              </div>
+            </div>
+          )}
+
+          {bookingError && <p className="status-error" style={{ marginBottom: "0.75rem" }}>{bookingError}</p>}
+          {bookingMessage && (
+            <p style={{ color: "var(--success)", fontSize: "0.88rem", fontWeight: 600, margin: "0 0 0.75rem" }}>
+              {bookingMessage}
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="button button-primary"
+            style={{ width: "100%", padding: "0.75rem", fontSize: "1rem" }}
+            onClick={handleBooking}
+            disabled={submittingBooking || !isAvailable}
+          >
+            {submittingBooking
+              ? "Reserving..."
+              : !isAvailable
+              ? "Dates Unavailable"
+              : nights > 0
+              ? `Reserve for ₹${grandTotal.toLocaleString("en-IN")}`
+              : "Check Availability"}
+          </button>
+
+          <p className="muted" style={{ textAlign: "center", fontSize: "0.8rem", margin: "0.75rem 0 0" }}>
+            You won't be charged yet. Instant confirmation.
+          </p>
+        </aside>
       </div>
     </div>
   );

@@ -4,5 +4,12 @@ server/node_modules/
 .env
 server/.env
 uploads/
+server/uploads/
 .vercel
 .env*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db

@@ -1,86 +1,130 @@
-# StayEase - Full Stack Property Booking Platform
+# StayEase - Full Stack Vacation Rental & Property Booking Platform
 
-## Overview
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
+[![Node](https://img.shields.io/badge/Node.js-Express-green.svg)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen.svg)](https://www.mongodb.com/)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black.svg)](https://vercel.com/)
+[![License](https://img.shields.io/badge/License-ISC-purple.svg)](LICENSE)
 
-StayEase is a MERN stack property booking platform built as an end-to-end full stack project.
-It supports secure authentication, listings management, booking workflows, and reviews with a
-modern, responsive UI.
+**StayEase** is a full-stack MERN property booking platform crafted for seamless vacation rental discoveries and reservations. Featuring verified superhosts, real-time availability checks, date range booking calculators, user reviews, and resilient serverless deployment on Vercel.
 
-**Live Demo:** [https://stayease-ifxaals-projects.vercel.app](https://stayease-ifxaals-projects.vercel.app)
+🔗 **Live Demo:** [https://stayease-ifxaals-projects.vercel.app](https://stayease-ifxaals-projects.vercel.app)
 
-## Core Features
+---
 
-- JWT authentication (register, login, protected routes)
-- Property listing creation with image upload
-- Search, filtering, and sorting for properties
-- Booking flow with date validation and availability checks
-- Reviews and ratings per property
-- User dashboards for `My Bookings` and `My Properties`
-- Practical loading, empty, and error states
+## Key Features
+
+- **Property Discovery & Search:**
+  - Fast location-based search across cities, states, and villa names.
+  - Interactive category pills (*Beachfront, Mountain, Heritage Haveli, Nature, Luxury Penthouse*).
+  - Multi-attribute price filtering and sorting (Price: Low to High / High to Low).
+- **High Availability & Zero-Crash Architecture:**
+  - Resilient database adapter with automatic timeout guards (prevents serverless lambda timeouts).
+  - Graceful fallback demo mode: curated listings are served seamlessly even if database connection is dormant or cold-starting.
+- **Listing Details & Amenities:**
+  - Curated photo gallery with responsive aspect ratio and hover zoom effects.
+  - Superhost and rating score badges.
+  - Dynamic amenities tag list (*Private Pool, High-speed Wi-Fi, Dedicated Workspace, Fireplace, Kitchen*).
+- **Interactive Booking Flow:**
+  - Date picker with check-in/check-out constraints and night duration calculation.
+  - Transparent pricing breakdown with service fee computation.
+  - Overlap collision detection to prevent double-bookings.
+- **Reviews & Ratings System:**
+  - Verified guest reviews with star ratings, timestamps, and reviewer initials.
+- **Host Dashboard & Listing Management:**
+  - Create property listings with either direct image URLs or file uploads.
+  - Host management dashboards for `My Properties` and `My Bookings`.
+- **JWT Authentication:**
+  - Secure bcrypt password hashing and token-based route protection.
+
+---
 
 ## Tech Stack
 
-- Frontend: React, React Router, Axios, CSS
-- Backend: Node.js, Express, MongoDB, Mongoose
-- Auth & tooling: JWT, Multer, Dotenv
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, React Router v7, Axios, Modern Vanilla CSS Design System |
+| **Backend** | Node.js, Express.js (v5), Mongoose (v9), Multer |
+| **Database** | MongoDB Atlas (Cloud NoSQL Database) |
+| **Authentication** | JSON Web Tokens (JWT), Bcrypt.js |
+| **Deployment** | Vercel Serverless Functions (`api/[...path].js`), Vercel Static Hosting |
 
-## Local Development
+---
 
-### 1) Install dependencies
+## Local Setup & Development
 
-From repo root:
+### 1. Clone the Repository
+```bash
+git clone https://github.com/mohammed-ifzal/stayease.git
+cd stayease
+```
 
-- `cd server && npm install`
-- `cd ../client && npm install`
+### 2. Configure Backend Environment
+Create a `.env` file in the `server` directory:
+```env
+PORT=5000
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_jwt_secret_key
+```
 
-### 2) Configure backend environment
+### 3. Install Dependencies
+```bash
+# Install backend dependencies
+cd server && npm install
 
-Create `server/.env`:
+# Install frontend dependencies
+cd ../client && npm install
+```
 
-- `MONGO_URI=your_mongodb_connection_string`
-- `JWT_SECRET=your_secret_key`
-- `PORT=5000`
+### 4. Seed the Database (Optional but Recommended)
+Populate your MongoDB Atlas cluster with 8+ curated listings across popular destinations:
+```bash
+cd server
+npm run seed
+```
 
-### 3) Run locally
+### 5. Run Locally
+Run both servers:
+```bash
+# Terminal 1 - Backend API (http://localhost:5000)
+cd server
+npm run dev
 
-- Backend: `cd server && npm run dev` (or `npm start`)
-- Frontend: `cd client && npm start`
+# Terminal 2 - Frontend App (http://localhost:3000)
+cd client
+npm start
+```
 
-Local URLs:
+---
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:5000/api`
-## API Endpoints
+## API Documentation
 
-### Auth
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
+### Authentication
+- `POST /api/auth/register` - Create a new user account
+- `POST /api/auth/login` - Authenticate and retrieve JWT token
+- `GET /api/auth/me` - Fetch logged-in user profile (Protected)
 
 ### Properties
-- `GET /api/properties`
-- `POST /api/properties`
-- `GET /api/properties/:id`
-- `DELETE /api/properties/:id`
+- `GET /api/properties` - List properties with filters (`location`, `minPrice`, `maxPrice`, `sortOrder`, `category`)
+- `GET /api/properties/:id` - Fetch single property details
+- `POST /api/properties` - Create a new listing (Protected)
+- `GET /api/properties/my` - Get listings created by current user (Protected)
+- `DELETE /api/properties/:id` - Remove a listing (Owner only)
 
 ### Bookings
-- `POST /api/bookings`
-- `GET /api/bookings/my`
-- `GET /api/bookings/property/:propertyId`
+- `POST /api/bookings` - Reserve dates for a property (Protected)
+- `GET /api/bookings/my` - View current user's booking history (Protected)
+- `GET /api/bookings/property/:propertyId` - Check booked dates for availability
 
 ### Reviews
-- `POST /api/reviews`
-- `GET /api/reviews/property/:propertyId`
+- `GET /api/reviews/property/:propertyId` - Fetch all reviews for a property
+- `POST /api/reviews` - Submit review for a booked property (Protected)
 
-## Deployment
+---
 
-This project includes a Vercel-ready configuration:
+## Deployment on Vercel
 
-- `vercel.json` for SPA and API routing
-- Serverless API entry at `api/[...path].js`
-- Shared Express app setup in `server/app.js`
-
-Required Vercel environment variables:
-
-- `MONGO_URI`
-- `JWT_SECRET`
+This repository is configured out of the box for Vercel deployment:
+- `vercel.json` configures client build output and routes `/api/*` to `api/[...path].js`.
+- Make sure to add `MONGO_URI` and `JWT_SECRET` under **Vercel Project Settings -> Environment Variables**.
+- Under **Settings -> Deployment Protection**, ensure **Vercel Authentication** is turned off for public viewing.

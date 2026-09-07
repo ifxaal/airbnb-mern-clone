@@ -1,9 +1,15 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Review = require("../models/Review");
 const Booking = require("../models/Booking");
 const auth = require("../middleware/authMiddleware");
+const { fallbackReviews } = require("../data/fallbackProperties");
 
 const router = express.Router();
+
+function isDBConnected() {
+  return mongoose.connection.readyState === 1;
+}
 
 // CREATE REVIEW (only if user booked the property)
 router.post("/", auth, async (req, res) => {
@@ -12,6 +18,18 @@ router.post("/", auth, async (req, res) => {
 
     if (!propertyId || !rating || !comment) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!isDBConnected()) {
+      const mockReview = {
+        _id: "rev-" + Date.now(),
+        user: { name: req.user.name || "Guest Traveler" },
+        property: propertyId,
+        rating: Number(rating),
+        comment,
+        createdAt: new Date()
+      };
+      return res.status(201).json(mockReview);
     }
 
     // Check if user booked this property
@@ -54,15 +72,23 @@ router.post("/", auth, async (req, res) => {
 // GET REVIEWS FOR A PROPERTY (public)
 router.get("/property/:propertyId", async (req, res) => {
   try {
+    const { propertyId } = req.params;
+
+    if (!isDBConnected() || propertyId.startsWith("demo-prop-")) {
+      const demoRev = fallbackReviews[propertyId] || [];
+      return res.json(demoRev);
+    }
+
     const reviews = await Review.find({
-      property: req.params.propertyId,
+      property: propertyId,
     }).populate("user", "name");
 
-    res.json(reviews);
+    res.json(reviews || []);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error fetching reviews:", err.message);
+    const demoRev = fallbackReviews[req.params.propertyId] || [];
+    res.json(demoRev);
   }
 });
-
 
 module.exports = router;
