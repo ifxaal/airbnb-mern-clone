@@ -245,7 +245,7 @@ function PropertyDetail() {
           {property.title}
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-          ★ {averageRating} ({reviews.length} reviews) · {property.location} · {isAvailable ? "Available" : "Booked"}
+          Rating: {averageRating} / 5 ({reviews.length} reviews) · {property.location} · {isAvailable ? "Available" : "Booked"}
         </p>
       </div>
 
@@ -318,7 +318,7 @@ function PropertyDetail() {
                         {r.user?.name || "Guest"}
                       </div>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                        ★ {r.rating} · {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Recent"}
+                        Rating: {r.rating} / 5 · {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Recent"}
                       </div>
                     </div>
                   </div>
@@ -378,7 +378,7 @@ function PropertyDetail() {
               <span className="price-unit"> / night</span>
             </div>
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              ★ {averageRating}
+              Rating: {averageRating} / 5
             </span>
           </div>
 

@@ -71,8 +71,10 @@ function MyBookings() {
           style={{ padding: "1rem", marginBottom: "0.9rem" }}
         >
           <h3 className="property-title">{booking.property?.title}</h3>
-          <p className="muted">📍 {booking.property?.location}</p>
-          <p>🗓 {booking.startDate.slice(0, 10)} → {booking.endDate.slice(0, 10)}</p>
+          <p className="muted">{booking.property?.location}</p>
+          <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+            {booking.startDate.slice(0, 10)} to {booking.endDate.slice(0, 10)}
+          </p>
           <p className="price">₹{booking.totalPrice}</p>
         </div>
 

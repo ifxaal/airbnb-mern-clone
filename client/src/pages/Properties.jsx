@@ -3,21 +3,11 @@ import { useNavigate } from "react-router-dom";
 import api, { getImageSrc } from "../api/axios";
 import { fallbackProperties } from "../data/fallbackProperties";
 
-const CATEGORIES = [
-  { label: "All Stays", value: "All" },
-  { label: "Beachfront", value: "Beachfront" },
-  { label: "Mountain", value: "Mountain" },
-  { label: "Heritage", value: "Heritage" },
-  { label: "Nature", value: "Nature" },
-  { label: "City Views", value: "Luxury" },
-];
-
 function Properties() {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
 
   const [filters, setFilters] = useState({
     location: "",
@@ -57,7 +47,6 @@ function Properties() {
     const reset = { location: "", minPrice: "", maxPrice: "", sortOrder: "" };
     setFilters(reset);
     setQueryFilters(reset);
-    setActiveCategory("All");
     setFilterError("");
   };
 
@@ -71,11 +60,10 @@ function Properties() {
     api
       .get("/properties", {
         params: {
-          location: queryFilters.location,
+          location: queryFilters.location || undefined,
           minPrice: queryFilters.minPrice || undefined,
           maxPrice: queryFilters.maxPrice || undefined,
-          sortOrder: queryFilters.sortOrder,
-          category: activeCategory !== "All" ? activeCategory : undefined,
+          sortOrder: queryFilters.sortOrder || undefined,
         },
         signal: controller.signal,
       })
@@ -84,6 +72,7 @@ function Properties() {
         if (res.data && res.data.length > 0) {
           setProperties(res.data);
         } else {
+          // If server returned empty, apply filters to local fallback
           let filtered = [...fallbackProperties];
           if (queryFilters.location) {
             const loc = queryFilters.location.toLowerCase();
@@ -93,16 +82,16 @@ function Properties() {
                 p.title.toLowerCase().includes(loc)
             );
           }
-          if (activeCategory !== "All") {
-            filtered = filtered.filter(
-              (p) => p.category && p.category.toLowerCase() === activeCategory.toLowerCase()
-            );
-          }
           if (queryFilters.minPrice) {
             filtered = filtered.filter((p) => p.pricePerNight >= Number(queryFilters.minPrice));
           }
           if (queryFilters.maxPrice) {
             filtered = filtered.filter((p) => p.pricePerNight <= Number(queryFilters.maxPrice));
+          }
+          if (queryFilters.sortOrder === "low") {
+            filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+          } else if (queryFilters.sortOrder === "high") {
+            filtered.sort((a, b) => b.pricePerNight - a.pricePerNight);
           }
           setProperties(filtered);
         }
@@ -118,10 +107,16 @@ function Properties() {
               p.title.toLowerCase().includes(loc)
           );
         }
-        if (activeCategory !== "All") {
-          filtered = filtered.filter(
-            (p) => p.category && p.category.toLowerCase() === activeCategory.toLowerCase()
-          );
+        if (queryFilters.minPrice) {
+          filtered = filtered.filter((p) => p.pricePerNight >= Number(queryFilters.minPrice));
+        }
+        if (queryFilters.maxPrice) {
+          filtered = filtered.filter((p) => p.pricePerNight <= Number(queryFilters.maxPrice));
+        }
+        if (queryFilters.sortOrder === "low") {
+          filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+        } else if (queryFilters.sortOrder === "high") {
+          filtered.sort((a, b) => b.pricePerNight - a.pricePerNight);
         }
         setProperties(filtered);
       })
@@ -133,54 +128,30 @@ function Properties() {
       isMounted = false;
       controller.abort();
     };
-  }, [queryFilters, activeCategory]);
+  }, [queryFilters]);
 
   return (
     <div>
       {/* HERO SECTION */}
-      <section className="hero-section">
+      <section className="panel hero-panel">
         <h1 className="hero-title">Discover Your Next Stay</h1>
-        <p className="hero-subtext">
-          Find and book unique vacation homes, chalets, and apartments with ease.
-        </p>
+        <p className="hero-subtext">Find and book unique stays with ease.</p>
       </section>
 
-      {/* CATEGORY TABS */}
-      <div className="category-bar">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.value}
-            type="button"
-            className={`category-tab ${activeCategory === cat.value ? "active" : ""}`}
-            onClick={() => setActiveCategory(cat.value)}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
       {/* SEARCH & FILTERS */}
-      <section className="search-panel">
+      <section className="panel search-panel">
         <div className="filter-grid">
-          <div className="input-wrapper">
-            <span className="input-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Search destination or property..."
-              value={filters.location}
-              onChange={(e) => handleFilterChange("location", e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-              className="input input-with-icon"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Search by location"
+            value={filters.location}
+            onChange={(e) => handleFilterChange("location", e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+            className="input"
+          />
           <input
             type="number"
-            placeholder="Min Price (₹)"
+            placeholder="Min Price"
             value={filters.minPrice}
             onChange={(e) => handleFilterChange("minPrice", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
@@ -188,7 +159,7 @@ function Properties() {
           />
           <input
             type="number"
-            placeholder="Max Price (₹)"
+            placeholder="Max Price"
             value={filters.maxPrice}
             onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
@@ -217,19 +188,17 @@ function Properties() {
 
       {error && <p className="status-error">{error}</p>}
 
-      {/* PROPERTIES LIST */}
+      {/* PROPERTY GRID */}
       {loading ? (
         <div className="grid">
           <div className="loading-block" />
           <div className="loading-block" />
           <div className="loading-block" />
-          <div className="loading-block" />
         </div>
       ) : properties.length === 0 ? (
-        <div className="empty-state">
-          <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.1rem" }}>No properties match your search</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", margin: "0 0 1rem" }}>
-            Try adjusting your search location or clearing active price filters.
+        <div className="panel empty-state">
+          <p style={{ color: "var(--text-muted)", marginBottom: "0.75rem" }}>
+            No properties match your filters.
           </p>
           <button type="button" className="button button-outline" onClick={clearFilters}>
             Reset Filters
@@ -250,9 +219,6 @@ function Properties() {
               ? getImageSrc(p.images[0])
               : fallbackImages[index % fallbackImages.length];
 
-            const displayRating = p.rating || (4.8 + ((index * 3) % 20) / 100).toFixed(2);
-            const isSuperhost = p.isSuperhost !== undefined ? p.isSuperhost : index % 2 === 0;
-
             return (
               <div
                 key={p._id || index}
@@ -269,21 +235,10 @@ function Properties() {
                     alt={p.title}
                     loading="lazy"
                   />
-                  {isSuperhost && (
-                    <span className="badge-tag">Superhost</span>
-                  )}
-                  <span className="rating-badge">
-                    <span className="star-icon">★</span>
-                    <span>{displayRating}</span>
-                  </span>
                 </div>
                 <div className="property-card-body">
-                  <h3 className="property-title" title={p.title}>
-                    {p.title}
-                  </h3>
-                  <p className="property-location">
-                    <span>{p.location}</span>
-                  </p>
+                  <h3 className="property-title">{p.title}</h3>
+                  <p className="property-location">{p.location}</p>
                   <div className="property-card-footer">
                     <p className="price">
                       ₹{Number(p.pricePerNight).toLocaleString("en-IN")}{" "}
